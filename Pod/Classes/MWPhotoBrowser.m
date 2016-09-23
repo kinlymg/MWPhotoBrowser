@@ -98,6 +98,10 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [self releaseAllUnderlyingPhotos:NO];
     [[SDImageCache sharedImageCache] clearMemory]; // clear memory
+    
+    [self.timer invalidate];
+    self.timer=nil;
+    [self.musicPlayer stop];
 }
 
 - (void)releaseAllUnderlyingPhotos:(BOOL)preserveCurrent {
@@ -257,6 +261,8 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
         [items addObject:flexSpace];
         [items addObject:_previousButton];
         [items addObject:flexSpace];
+        [items addObject:_playerButton];//by kinlymg
+        [items addObject:flexSpace];
         [items addObject:_nextButton];
         [items addObject:flexSpace];
     } else {
@@ -272,6 +278,9 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
             self.navigationItem.rightBarButtonItem = _actionButton;
         [items addObject:fixedSpace];
     }
+
+    //add delete buttons
+    [items addObject:_deleteButton]; //by kinlymg
 
     // Toolbar visibility
     [_toolbar setItems:items];
@@ -1111,14 +1120,16 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 	_nextButton.enabled = (_currentPageIndex < numberOfPhotos - 1);
     
     // Disable action button if there is no image or it's a video
-    MWPhoto *photo = [self photoAtIndex:_currentPageIndex];
+//    MWPhoto *photo =
+    [self photoAtIndex:_currentPageIndex];
+    /*
     if ([photo underlyingImage] == nil || ([photo respondsToSelector:@selector(isVideo)] && photo.isVideo)) {
         _actionButton.enabled = NO;
         _actionButton.tintColor = [UIColor clearColor]; // Tint to hide button
     } else {
         _actionButton.enabled = YES;
         _actionButton.tintColor = nil;
-    }
+     }*///by kinlymg for temp
 	
 }
 
@@ -1169,6 +1180,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 }
 
 - (void)playButtonTapped:(id)sender {
+    [self stopPlayMusicAndPhoto];//by kinlymg
     // Ignore if we're already playing a video
     if (_currentVideoIndex != NSUIntegerMax) {
         return;
@@ -1533,7 +1545,10 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 - (BOOL)areControlsHidden { return (_toolbar.alpha == 0); }
 - (void)hideControls { [self setControlsHidden:YES animated:YES permanent:NO]; }
 - (void)showControls { [self setControlsHidden:NO animated:YES permanent:NO]; }
-- (void)toggleControls { [self setControlsHidden:![self areControlsHidden] animated:YES permanent:NO]; }
+- (void)toggleControls { [self setControlsHidden:![self areControlsHidden] animated:YES permanent:NO];
+    [self stopPlayMusicAndPhoto];//by kinlymg;
+    self.navigationController.navigationBar.hidden=NO;
+}
 
 #pragma mark - Properties
 
@@ -1558,6 +1573,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 
 - (void)doneButtonPressed:(id)sender {
     // Only if we're modal and there's a done button
+    [self stopPlayMusicAndPhoto];//by kinlymg
     if (_doneButton) {
         // See if we actually just want to show/hide grid
         if (self.enableGrid) {
