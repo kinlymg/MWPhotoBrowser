@@ -352,4 +352,52 @@
     }
 }
 
+
+
+
+// 附加
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+- (id)initWithThumbnailURL:(NSURL *)thumbnailURL date:(NSDate *)date
+{
+    self = [super init];
+    if (self) {
+        self.thumbnailURL = thumbnailURL;
+        self.date = date;
+    }
+    return self;
+}
+
+- (id)initWithFilePath:(NSString *)path {
+    if ((self = [super init])) {
+        _photoPath = [path copy];
+    }
+    return self;
+}
+
+
++ (MWPhoto *)photoWithURLString:(NSString *)urlString date:(NSDate *)date
+{
+    return [[MWPhoto alloc] initWithThumbnailURL:[NSURL URLWithString:urlString] date:date];
+}
+
++ (MWPhoto *)photoWithURL:(NSURL *)url date:(NSDate *)date
+{
+    return [[MWPhoto alloc] initWithThumbnailURL:url date:date];
+}
++ (MWPhoto *)photoWithFilePath:(NSString *)path {
+    return [[MWPhoto alloc] initWithFilePath:path];
+}
+
+-(void)setPhotoPath:(NSString*)path{
+    _photoPath=[path copy];
+}
+-(void)setPhotoUrl:(NSURL *)url{
+    _photoURL=[url copy];
+}
+
+
+
+
 @end

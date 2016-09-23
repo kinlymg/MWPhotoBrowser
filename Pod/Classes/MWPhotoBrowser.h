@@ -36,9 +36,12 @@
 - (void)photoBrowser:(MWPhotoBrowser *)photoBrowser photoAtIndex:(NSUInteger)index selectedChanged:(BOOL)selected;
 - (void)photoBrowserDidFinishModalPresentation:(MWPhotoBrowser *)photoBrowser;
 
+-(void)photoBrower:(MWPhotoBrowser*)photoBrower deletePageAtindex:(NSUInteger)index;
+
+
 @end
 
-@interface MWPhotoBrowser : UIViewController <UIScrollViewDelegate, UIActionSheetDelegate>
+@interface MWPhotoBrowser : UIViewController <UIScrollViewDelegate, UIActionSheetDelegate,MWmodelviewdelegate>
 
 @property (nonatomic, weak) IBOutlet id<MWPhotoBrowserDelegate> delegate;
 @property (nonatomic) BOOL zoomPhotosToFill;
@@ -57,6 +60,14 @@
 // Icon should be located in the app's main bundle
 @property (nonatomic, strong) NSString *customImageSelectedIconName;
 @property (nonatomic, strong) NSString *customImageSelectedSmallIconName;
+
+#pragma mark kinlymg add
+@property(nonatomic,strong)NSTimer *timer;
+@property(nonatomic,strong)AVAudioPlayer *musicPlayer;
+-(void)beginPlay;
+-(void)beginPlayMusic;
+
+
 
 // Init
 - (id)initWithPhotos:(NSArray *)photosArray;

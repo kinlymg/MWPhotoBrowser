@@ -1,4 +1,6 @@
 #ifdef __OBJC__
 #import <UIKit/UIKit.h>
+#import "MWmodelviewdelegate.h"
 #endif
 
+static NSString *keyCATransition=@"kCATransition";

@@ -12,6 +12,7 @@
 #import "MWPhotoBrowserPrivate.h"
 #import "SDImageCache.h"
 #import "UIImage+MWPhotoBrowser.h"
+#import "NBPlayPhotoSetViewController.h"
 
 #define PADDING                  10
 
@@ -175,11 +176,13 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
         UIImage *nextButtonImage = [UIImage imageForResourcePath:[NSString stringWithFormat:arrowPathFormat, @"Right"] ofType:@"png" inBundle:[NSBundle bundleForClass:[self class]]];
         _previousButton = [[UIBarButtonItem alloc] initWithImage:previousButtonImage style:UIBarButtonItemStylePlain target:self action:@selector(gotoPreviousPage)];
         _nextButton = [[UIBarButtonItem alloc] initWithImage:nextButtonImage style:UIBarButtonItemStylePlain target:self action:@selector(gotoNextPage)];
+        
+        _playerButton=[[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemPlay target:self action:@selector(settingPlayer)];
     }
     if (self.displayActionButton) {
         _actionButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(actionButtonPressed:)];
     }
-    
+        _deleteButton=[[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemTrash target:self action:@selector(deleteButtonAction:)];
     // Update
     [self reloadData];
     
@@ -1577,58 +1580,164 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 }
 
 #pragma mark - Actions
+-(void)deleteButtonAction:(id)sender{
+    UIActionSheet *sheet=[[UIActionSheet alloc]initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", nil) destructiveButtonTitle:NSLocalizedString(@"Delete", nil) otherButtonTitles:nil];
+    sheet.tag=100;
+    [sheet showInView:self.view];
+}
 
-- (void)actionButtonPressed:(id)sender {
-
-    // Only react when image has loaded
-    id <MWPhoto> photo = [self photoAtIndex:_currentPageIndex];
-    if ([self numberOfPhotos] > 0 && [photo underlyingImage]) {
-        
-        // If they have defined a delegate method then just message them
-        if ([self.delegate respondsToSelector:@selector(photoBrowser:actionButtonPressedForPhotoAtIndex:)]) {
-            
-            // Let delegate handle things
-            [self.delegate photoBrowser:self actionButtonPressedForPhotoAtIndex:_currentPageIndex];
-            
-        } else {
-            
-            // Show activity view controller
-            NSMutableArray *items = [NSMutableArray arrayWithObject:[photo underlyingImage]];
-            if (photo.caption) {
-                [items addObject:photo.caption];
-            }
-            self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
-            
-            // Show loading spinner after a couple of seconds
-            double delayInSeconds = 2.0;
-            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-                if (self.activityViewController) {
-                    [self showProgressHUDWithMessage:nil];
-                }
-            });
-
-            // Show
-            typeof(self) __weak weakSelf = self;
-            [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
-                weakSelf.activityViewController = nil;
-                [weakSelf hideControlsAfterDelay];
-                [weakSelf hideProgressHUD:YES];
-            }];
-            // iOS 8 - Set the Anchor Point for the popover
-            if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8")) {
-                self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
-            }
-            [self presentViewController:self.activityViewController animated:YES completion:nil];
-
+-(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex{
+    if (actionSheet.destructiveButtonIndex==buttonIndex) {
+        if ([self.delegate respondsToSelector:@selector(photoBrower:deletePageAtindex:)]) {
+            [_delegate photoBrower:self deletePageAtindex:_currentPageIndex];
+            [self reloadData];
         }
+    }
+}
+
+#pragma mark - Actions
+- (void)actionButtonPressed:(id)sender {
+    
+    // Only react when image has loaded
+    MWPhoto*photo = [self photoAtIndex:_currentPageIndex];
+    if([photo isVideo]){
+        NSURL *videoLink=photo.videoURL;
+        NSArray *activityItems = @[videoLink];
+        self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:activityItems applicationActivities:nil];
+        [self.activityViewController setValue:@"Video" forKey:@"subject"];
+        
+        // Show loading spinner after a couple of seconds
+        double delayInSeconds = 2.0;
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            if (self.activityViewController) {
+                //[self showProgressHUDWithMessage:nil];
+            }
+        });
+        
+        // Show
+        typeof(self) __weak weakSelf = self;
+        [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
+            weakSelf.activityViewController = nil;
+            [weakSelf hideControlsAfterDelay];
+            //[weakSelf hideProgressHUD:YES];
+        }];
+        // iOS 8 - Set the Anchor Point for the popover
+        if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8")) {
+            self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
+        }
+        [self presentViewController:self.activityViewController animated:YES completion:nil];
         
         // Keep controls hidden
         [self setControlsHidden:NO animated:YES permanent:YES];
-
+        
+        
+        
+        
+        
+    }else{
+        if ([self numberOfPhotos] > 0 && [photo underlyingImage]) {
+            
+            // If they have defined a delegate method then just message them
+            if ([self.delegate respondsToSelector:@selector(photoBrowser:actionButtonPressedForPhotoAtIndex:)]) {
+                
+                // Let delegate handle things
+                [self.delegate photoBrowser:self actionButtonPressedForPhotoAtIndex:_currentPageIndex];
+                
+            } else {
+                
+                // Show activity view controller
+                NSMutableArray *items = [NSMutableArray arrayWithObject:[photo underlyingImage]];
+                if (photo.caption) {
+                    [items addObject:photo.caption];
+                }
+                self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
+                
+                // Show loading spinner after a couple of seconds
+                double delayInSeconds = 2.0;
+                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+                dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                    if (self.activityViewController) {
+                        //[self showProgressHUDWithMessage:nil];
+                    }
+                });
+                
+                // Show
+                typeof(self) __weak weakSelf = self;
+                [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
+                    weakSelf.activityViewController = nil;
+                    [weakSelf hideControlsAfterDelay];
+                    //[weakSelf hideProgressHUD:YES];
+                }];
+                // iOS 8 - Set the Anchor Point for the popover
+                if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8")) {
+                    self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
+                }
+                [self presentViewController:self.activityViewController animated:YES completion:nil];
+                
+            }
+            
+            // Keep controls hidden
+            [self setControlsHidden:NO animated:YES permanent:YES];
+            
+        }
+        
     }
     
 }
+
+
+//- (void)actionButtonPressed:(id)sender {
+//
+//    // Only react when image has loaded
+//    id <MWPhoto> photo = [self photoAtIndex:_currentPageIndex];
+//    if ([self numberOfPhotos] > 0 && [photo underlyingImage]) {
+//        
+//        // If they have defined a delegate method then just message them
+//        if ([self.delegate respondsToSelector:@selector(photoBrowser:actionButtonPressedForPhotoAtIndex:)]) {
+//            
+//            // Let delegate handle things
+//            [self.delegate photoBrowser:self actionButtonPressedForPhotoAtIndex:_currentPageIndex];
+//            
+//        } else {
+//            
+//            // Show activity view controller
+//            NSMutableArray *items = [NSMutableArray arrayWithObject:[photo underlyingImage]];
+//            if (photo.caption) {
+//                [items addObject:photo.caption];
+//            }
+//            self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
+//            
+//            // Show loading spinner after a couple of seconds
+//            double delayInSeconds = 2.0;
+//            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+//            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+//                if (self.activityViewController) {
+//                    [self showProgressHUDWithMessage:nil];
+//                }
+//            });
+//
+//            // Show
+//            typeof(self) __weak weakSelf = self;
+//            [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
+//                weakSelf.activityViewController = nil;
+//                [weakSelf hideControlsAfterDelay];
+//                [weakSelf hideProgressHUD:YES];
+//            }];
+//            // iOS 8 - Set the Anchor Point for the popover
+//            if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8")) {
+//                self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
+//            }
+//            [self presentViewController:self.activityViewController animated:YES completion:nil];
+//
+//        }
+//        
+//        // Keep controls hidden
+//        [self setControlsHidden:NO animated:YES permanent:YES];
+//
+//    }
+//    
+//}
 
 #pragma mark - Action Progress
 
@@ -1664,6 +1773,157 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
         [self.progressHUD hide:YES];
     }
     self.navigationController.navigationBar.userInteractionEnabled = YES;
+}
+
+
+
+#pragma mark-
+#pragma mark-nbmodelviewdelegate
+-(void)modelview:(id)controller data:(id)data{
+    if ([controller isKindOfClass:[NBPlayPhotoSetViewController class]]) {
+        self.navigationController.navigationBar.hidden=YES;;
+        [self hideControls];
+        [self playphotos];
+    }
+}
+
+-(void)playphotos{
+    NSUserDefaults *ds=[NSUserDefaults standardUserDefaults];
+    NSString *isPlaymusic=[ds stringForKey:@"KPLAYMUSIC"];
+    //开始播放幻灯片
+    [self beginPlay];
+    if (isPlaymusic!=nil&&[isPlaymusic isEqualToString:@"MUSICON"]) {
+        //播放背景音乐。
+        [self beginPlayMusic];
+    }
+}
+
+
+#pragma mark-photo player amiate by kinlymg
+-(void)settingPlayer{
+    NBPlayPhotoSetViewController *playControl=[[NBPlayPhotoSetViewController alloc]initWithStyle:UITableViewStyleGrouped];
+    playControl.modaldelegate=self;
+    UINavigationController *nav=[[UINavigationController alloc]initWithRootViewController:playControl];
+    nav.navigationBar.barStyle=UIBarStyleDefault;
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+
+-(void)beginPlay{
+    [self.timer invalidate];
+    self.timer=nil;
+    NSInteger interval=[[NSUserDefaults standardUserDefaults]integerForKey:@"KINTERVAL"];
+    
+    self.timer=[NSTimer scheduledTimerWithTimeInterval:interval
+                                                target: self
+                                              selector: @selector(handleTimer:)
+                                              userInfo: nil
+                                               repeats: YES];
+    [self.timer fire];
+}
+
+
+-(void)beginPlayMusic{
+    NSUserDefaults *ds=[NSUserDefaults standardUserDefaults];
+    NSString *urlstring=[ds stringForKey:@"kAudioUrl"];
+    //NSString *repeatType=[ds stringForKey:@"KREPEAT"];
+    if (urlstring!=nil) {
+        NSURL *url=[NSURL URLWithString:urlstring];
+        self.musicPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:url error:nil];
+        //创建播放器
+        [_musicPlayer prepareToPlay];
+        [_musicPlayer setVolume:1];   //设置音量大小
+        //if ([repeatType isEqualToString:@"REPEATON"]&&repeatType!=nil) {
+        _musicPlayer.numberOfLoops = -1;//设置音乐播放次数  -1为一直循环
+        // }else{
+        //   _musicPlayer.numberOfLoops=1;
+        // }
+        [_musicPlayer play];   //播放
+        
+    }
+}
+
+
+- (void) handleTimer: (NSTimer *) timer {
+    [self playNextPageByAuto];
+}
+-(void)playNextPageByAuto{
+    
+    [self PlayerToPageAtIndex:_currentPageIndex+1 animated:NO];
+}
+
+-(void)stopPlayMusicAndPhoto{
+    [self.timer invalidate];
+    self.timer=nil;
+    [self.musicPlayer stop];
+}
+- (void)PlayerToPageAtIndex:(NSUInteger)index animated:(BOOL)animated {
+    
+    // Change page
+    if (index < [self numberOfPhotos]) {
+        CGRect pageFrame = [self frameForPageAtIndex:index];
+        [_pagingScrollView setContentOffset:CGPointMake(pageFrame.origin.x - PADDING, 0) animated:animated];
+        [self updateNavigation];
+        [self didChangeCenterPageIndexFrom:index-1 to:index];//by kinlymg
+    }else{
+        //重新开始播放
+        NSInteger nextIndex=0;
+        CGRect pageFrame = [self frameForPageAtIndex:nextIndex];
+        [_pagingScrollView setContentOffset:CGPointMake(pageFrame.origin.x - PADDING, 0) animated:animated];
+        [self updateNavigation];
+        [self didChangeCenterPageIndexFrom:index to:nextIndex];//by kinlymg
+    }
+    
+    // Update timer to give more time
+    [self hideControlsAfterDelay];
+    
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)didChangeCenterPageIndexFrom:(NSInteger)from to:(NSInteger)to {
+    // No-op
+    //添加动画。。 kinlymg
+    [self pageTransform:from andToindex:to];
+}
+
+-(MWZoomingScrollView*)getPageAtPageIndex:(NSInteger)pageIndex{
+    for (MWZoomingScrollView* page in _visiblePages) {
+        if (page.index == pageIndex) {
+            return (MWZoomingScrollView*)page;
+        }
+    }
+    return nil;
+}
+
+
+
+- (void)pageTransform:(NSInteger)frIndex andToindex:(NSInteger)toIndex {
+    NSUserDefaults *ds=[NSUserDefaults standardUserDefaults];
+    NSString *type=[ds stringForKey:keyCATransition];
+    if (type==nil) {
+        type=kCATransitionMoveIn;
+    }
+    NSString *subType=@"";
+    CATransition *animation = [CATransition animation];
+    animation.delegate = self;
+    animation.duration =2;
+    animation.timingFunction = UIViewAnimationCurveEaseInOut;
+    if ([type isEqualToString:kCATransitionFade]) {
+        subType=kCATransitionFromLeft;
+    }else if ([type isEqualToString:@"cube"]){
+        subType=kCATransitionFromTop;
+    }else{
+        subType=kCATransitionFromRight;
+    }
+    animation.type =type;
+    animation.subtype = subType;
+    UIView *frview=[self getPageAtPageIndex:frIndex];
+    UIView *toview=[self getPageAtPageIndex:toIndex];
+    NSUInteger green = [[_pagingScrollView subviews] indexOfObject:frview];
+    NSUInteger blue = [[_pagingScrollView subviews] indexOfObject:toview];
+    [_pagingScrollView exchangeSubviewAtIndex:green withSubviewAtIndex:blue];
+    [[_pagingScrollView layer] addAnimation:animation forKey:@"animation"];
+    
 }
 
 @end

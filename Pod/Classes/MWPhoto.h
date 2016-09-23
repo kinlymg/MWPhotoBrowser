@@ -32,5 +32,45 @@
 - (id)initWithAsset:(PHAsset *)asset targetSize:(CGSize)targetSize;
 - (id)initWithVideoURL:(NSURL *)url;
 
+
+
+
+//扩充。
+#pragma mark-public medata
+@property(nonatomic,strong)NSString *hide;
+@property(nonatomic,strong)NSString*gentype;
+@property(nonatomic,strong)NSString *modifyDate;
+@property(nonatomic,strong)NSString *CreateDate;
+@property(nonatomic,strong)NSNumber *size;
+@property(nonatomic,strong)NSString*imageName;
+@property(nonatomic,strong)NSString* lastName;
+@property(nonatomic,strong)NSString *firstName;
+
+#pragma photo
+@property (nonatomic, strong) NSURL *thumbnailURL;
+@property (nonatomic, strong) UIImage *thumbnail;
+@property (nonatomic, strong) NSDate *date;
+@property(nonatomic,strong)NSString *desc;
+//@property NSUInteger *index;
+@property(nonatomic,strong) NSIndexPath *indexpath;
+@property(nonatomic,strong)NSString *name;
+@property(nonatomic,strong)NSString *mediaNM;
+@property(nonatomic,strong)NSString *selfDefine;
+@property(nonatomic,strong)NSString *photoPath;
+
+@property Boolean isSelected;
+- (id)initWithThumbnailURL:(NSURL *)thumbnailURL date:(NSDate *)date;
++ (MWPhoto *)photoWithURLString:(NSString *)urlString date:(NSDate *)date;
++ (MWPhoto *)photoWithURL:(NSURL *)url date:(NSDate *)date;
+
+// Init
+- (id)initWithFilePath:(NSString *)path;
+
+
+
+
+-(void)setPhotoPath:(NSString*)path;
+-(void)setPhotoUrl:(NSURL*)url;
+
 @end
 
