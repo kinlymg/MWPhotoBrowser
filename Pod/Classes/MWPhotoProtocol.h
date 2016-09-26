@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 // Notifications
 #define MWPHOTO_LOADING_DID_END_NOTIFICATION @"MWPHOTO_LOADING_DID_END_NOTIFICATION"
@@ -67,5 +68,21 @@
 
 // Cancel any background loading of image data
 - (void)cancelAnyLoading;
+    
+    
+    //附加。
+    @property (nonatomic, strong) NSDate *date;
+    
+    @optional
+    @property (nonatomic, strong) NSURL *thumbnailURL;
+    @property (nonatomic, strong) UIImage *thumbnail;
+    @property(nonatomic,strong)NSIndexPath *indexpath;
+    @property NSUInteger index;
+    @property(nonatomic,strong) NSString*name;
+    @property(nonatomic,strong)NSString*mediaNM;
+    @property(nonatomic,strong)NSString *selfDefine;
+    @property Boolean isSelected;
+    @property(nonatomic,strong)NSString *desc;
+- (id)initWithThumbnailURL:(NSURL *)thumbnailURL date:(NSDate *)date;
 
 @end
