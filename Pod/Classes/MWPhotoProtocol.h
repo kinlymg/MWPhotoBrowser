@@ -83,6 +83,7 @@
     @property(nonatomic,strong)NSString *selfDefine;
     @property Boolean isSelected;
     @property(nonatomic,strong)NSString *desc;
+    @property double sortNum;
 - (id)initWithThumbnailURL:(NSURL *)thumbnailURL date:(NSDate *)date;
 
 @end

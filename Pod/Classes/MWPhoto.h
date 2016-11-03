@@ -57,6 +57,7 @@
 @property(nonatomic,strong)NSString *mediaNM;
 @property(nonatomic,strong)NSString *selfDefine;
 @property(nonatomic,strong)NSString *photoPath;
+@property double sortNum;
 
 @property Boolean isSelected;
 - (id)initWithThumbnailURL:(NSURL *)thumbnailURL date:(NSDate *)date;
